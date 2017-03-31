@@ -1,0 +1,37 @@
+{
+  "name": "cdp-crawler",
+  "version": "1.0.0",
+  "description": "crawls network devices using cdp and creates a graph",
+  "main": "cdpCrawl.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KanoczTomas/cdpCrawler.git"
+  },
+  "keywords": [
+    "cdp",
+    "graph",
+    "neighbors"
+  ],
+  "author": "Tomas Kanocz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/KanoczTomas/cdpCrawler/issues"
+  },
+  "homepage": "https://github.com/KanoczTomas/cdpCrawler#readme",
+  "dependencies": {
+    "async": "^2.2.0",
+    "config": "^1.25.1",
+    "graph-data-structure": "^0.8.0",
+    "snmp-native": "^1.1.0"
+  },
+  "devDependencies": {
+    "mocha": "^3.2.0",
+    "should": "^11.2.1"
+  }
+}
