@@ -3,7 +3,7 @@
 describe('WorkQueue:', function(){
     it('should have attribute toDo which is a list');
     it('attribute toDo should be empty on start');
-    it('toDo members should be objects with community, hostname and error attributes');
+    it('toDo members should be objects with community, hostname, ip and error attributes');
     it('should have attribute done which is a list');
     it('attribute done should be empty on start');
     it('this.addToWorkQueue(hostname) should call findSnmpCommunity and add entry to toDO after getting community');
