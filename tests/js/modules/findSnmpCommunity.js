@@ -1,50 +1,60 @@
 'use strict';
 
 var proxyquire = require('proxyquire');
+var Promise = require('bluebird');
 var should = require('should');
 var sinon = require('sinon');
+
+var scenario;
+function resetScenario(){
+    scenario =  [
+        {community: 'jahoda',
+         delay: 200,
+         fail: false
+        },
+        {community: 'malina',
+         delay: 600,
+         fail: false
+        },
+        {community: 'pohoda',
+         delay: 700,
+         fail: false
+        }
+    ];
+};
+resetScenario();
+
 
 proxyquire('../../../js/modules/findSnmpCommunity',{
     'config': {
         results: [
-            'jahoda;pass',//if set to fail it will throw - emulating snmp failure
-            'pohoda;pass',
-            'malina;pass'
+            'jahoda',
+            'pohoda',
+            'malina'
         ],
         get: function configGet(input){
             if(input === 'snmp.communities') return this.results;
             else if(input === 'snmp.oids') return {hostname: '.1.2.3.test'};
         },
-        set: function configSet(input){
-            this.results = input;
-        },
-        spyOn: function(){
-            return sinon.spy(this,'get');
-        },
-        spyOff: function(){
-            this.get.restore();
-        }
-        
     },
     'snmp-native': {
-        configure: function configure(success){
-            this.success = success;
-        },
         Session: function(sessionConfigObj){
-            this.get = function sessionGet(configObj, callback){
+            this.getAsync = function sessionGet(configObj){
                 this.configObj = configObj;
                 this.sessionConfigObj = sessionConfigObj;
-                if(sessionConfigObj.community.split(";")[1] === 'pass') {
-                    setTimeout(function(){
-                        callback(null, {dummy: 'test'});
-                    },Math.random()*1000);
-                }
-                else {
-                    setTimeout(function(){
-                        callback(Error('timed out'));
-                    },Math.random()*2000);
-                }
-            }
+                var communityObj = scenario.filter(function(elm){
+                    return elm.community === sessionConfigObj.community;
+                })[0];
+                var resultPromise =  Promise.delay(communityObj.delay)
+                .then(function(){
+                    if(communityObj.fail) return Promise.reject(communityObj.fail);
+                    else {
+                        return Promise.resolve(communityObj.community);
+                    }
+                })  
+                return resultPromise;
+            };
+            this.close = sinon.spy();
         }
     }
 });
@@ -53,6 +63,12 @@ proxyquire('../../../js/modules/findSnmpCommunity',{
 var findSnmpCommunity = require('../../../js/modules/findSnmpCommunity');
 
 describe('findSnmpCommunity:', function(){
+    
+    
+    beforeEach(function(){
+        resetScenario();
+    })
+    
     it('should return a Promise', function(){
         findSnmpCommunity('host').should.be.a.Promise();
     });
@@ -65,17 +81,33 @@ describe('findSnmpCommunity:', function(){
     })
     it('should take community strings from a config file', function(){
         findSnmpCommunity('host');
-        findSnmpCommunity.sessions[0].sessionConfigObj.community.should.be.equal('jahoda;pass');
-        findSnmpCommunity.sessions[1].sessionConfigObj.community.should.be.equal('pohoda;pass');
-        findSnmpCommunity.sessions[2].sessionConfigObj.community.should.be.equal('malina;pass');
+        findSnmpCommunity.sessions[0].sessionConfigObj.community.should.be.equal('jahoda');
+        findSnmpCommunity.sessions[1].sessionConfigObj.community.should.be.equal('pohoda');
+        findSnmpCommunity.sessions[2].sessionConfigObj.community.should.be.equal('malina');
     });
     it('should take oids from a config file', function(){
         findSnmpCommunity('host');
         findSnmpCommunity.sessions[0].configObj.oid.should.be.equal('.1.2.3.test');
     });
-    it('should search communities in parallel');
-    it('should resolve as soon as community found');
-    it('should stop all snmp sessions after community found');
+    it('should resolve as soon as community found', function(){
+        var p1 = findSnmpCommunity('host');
+        scenario[2].delay = 100;
+        var p2 = findSnmpCommunity('host');
+        return Promise.all([ p1, p2 ])
+        .then(function(res){
+            res[0].should.be.equal('jahoda');
+            res[1].should.be.equal('pohoda');
+        });
+    });
+    it('should stop all snmp sessions after community found', function(){
+        return findSnmpCommunity('host')
+        .then(function(){
+            sinon.assert.called(findSnmpCommunity.sessions[0].close);
+            sinon.assert.called(findSnmpCommunity.sessions[1].close);
+            sinon.assert.called(findSnmpCommunity.sessions[2].close);
+        });
+        
+    });
     it('should pass snmp error in case snmp failed for all');
     it('should return error "community not found" on rejection');
 });
