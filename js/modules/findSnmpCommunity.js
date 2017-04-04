@@ -33,7 +33,7 @@ function findSnmpCommunity(hostname){
             result = yield Promise.any(workQueue);
         }
         catch(err){
-            result = err;
+            result = Promise.reject(err);
         }
         //we clean up sessions
         findSnmpCommunity.sessions.forEach(function(sessionToClose){

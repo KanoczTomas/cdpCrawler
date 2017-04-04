@@ -108,6 +108,16 @@ describe('findSnmpCommunity:', function(){
         });
         
     });
-    it('should pass snmp error in case snmp failed for all');
-    it('should return error "community not found" on rejection');
+    it('should pass snmp error in case snmp failed for all', function(){
+        scenario[0].fail = 'failed jahoda';
+        scenario[1].fail = 'failed malina';
+        scenario[2].fail = 'failed pohoda';
+        return findSnmpCommunity('host').should.be.rejected()
+        .then(function(err){
+            err.should.be.Error();
+            err['0'].should.be.equal('failed jahoda');
+            err['1'].should.be.equal('failed malina');
+            err['2'].should.be.equal('failed pohoda');
+        });
+    });
 });
