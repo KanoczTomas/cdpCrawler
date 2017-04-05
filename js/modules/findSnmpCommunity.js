@@ -26,7 +26,10 @@ function findSnmpCommunity(hostname){
         //workQueue.push(session.getAsync({oid: oids.hostname}))
         var promise = session.getAsync({oid: oids.hostname})
         .then(function(res){
-            return Promise.resolve({hostname: res[0].value, community: session.options.community});
+            return {
+                hostname: res[0].value,
+                community: session.options.community
+            };
         });
         workQueue.push(promise);
         findSnmpCommunity.sessions.push(session);  
