@@ -20,12 +20,16 @@ function findSnmpCommunity(hostname){
     findSnmpCommunity.sessions = [];
     var workQueue = []; //we will push promisses here for the generator later to pick up
     
-    //we itterate through all the communities, create a new snmp object and push session objects to sessions and workQueue. WorkQueue is just an arra of promises (as getAsync returns a promise). We can later call Promise.any on it (see Promise.courutine below)
+    //we itterate through all the communities, create a new snmp object and push session
+    //objects to findSnmpCommunity.sessions and workQueue. WorkQueue is just an array
+    //of promises (as getAsync returns a promise). We can later call Promise.any on 
+    //it (see Promise.courutine below) to race the promises
     communities.forEach(function(community){
         var session = new snmp.Session({host: hostname, community: community});
         //workQueue.push(session.getAsync({oid: oids.hostname}))
         var promise = session.getAsync({oid: oids.hostname})
         .then(function(res){
+            
             return {
                 hostname: res[0].value,
                 community: session.options.community
@@ -49,8 +53,11 @@ function findSnmpCommunity(hostname){
             sessionToClose.close();
         });
         
-        return Promise.resolve(result); //we resolve the promise, if it is successfull, the community will be as the filfilled value, if rejected, err wil refect
-    })();
+        //we resolve the promise, if it is successfull, the {hostname: 'hostname',
+        //community: 'community'} object will be as the filfilled value of the promise,
+        //if rejected, err wil reject
+        return Promise.resolve(result); 
+    })();//Promise.coroutine of course returns a promise :)
     
     return resultPromise;    
 }

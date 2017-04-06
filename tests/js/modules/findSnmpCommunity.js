@@ -9,14 +9,17 @@ var scenario;
 function resetScenario(){
     scenario =  [
         {community: 'jahoda',
+         hostname: 'jahodaHost',
          delay: 200,
          fail: false
         },
         {community: 'malina',
+         hostname: 'malinaHost',
          delay: 600,
          fail: false
         },
         {community: 'pohoda',
+         hostname: 'pohodaHost',
          delay: 700,
          fail: false
         }
@@ -38,7 +41,9 @@ proxyquire('../../../js/modules/findSnmpCommunity',{
         },
     },
     'snmp-native': {
-        Session: function(sessionConfigObj){
+        Session: function Session(sessionConfigObj){
+            var self = this;//we remember the Session object to later
+            //assign options object to it
             this.getAsync = function sessionGet(configObj){
                 this.configObj = configObj;
                 this.sessionConfigObj = sessionConfigObj;
@@ -47,9 +52,13 @@ proxyquire('../../../js/modules/findSnmpCommunity',{
                 })[0];
                 var resultPromise =  Promise.delay(communityObj.delay)
                 .then(function(){
-                    if(communityObj.fail) return Promise.reject(communityObj.fail);
+                    if(communityObj.fail) {
+                        return Promise.reject(communityObj.fail);
+                    }
                     else {
-                        return Promise.resolve(communityObj.community);
+                        self.options = {};//faking options when calling new Snmp.session();
+                        self.options.community = communityObj.community;
+                        return Promise.resolve([{value: communityObj.hostname}]);
                     }
                 })  
                 return resultPromise;
@@ -89,14 +98,19 @@ describe('findSnmpCommunity:', function(){
         findSnmpCommunity('host');
         findSnmpCommunity.sessions[0].configObj.oid.should.be.equal('.1.2.3.test');
     });
-    it('should resolve as soon as community found', function(){
+    it('should resolve as soon as community found and give back {hostname: hostname, community: community}', function(){
         var p1 = findSnmpCommunity('host');
         scenario[2].delay = 100;
         var p2 = findSnmpCommunity('host');
         return Promise.all([ p1, p2 ])
         .then(function(res){
-            res[0].should.be.equal('jahoda');
-            res[1].should.be.equal('pohoda');
+            res[0].community.should.be.equal('jahoda');
+            res[0].hostname.should.be.equal('jahodaHost');
+            res[1].community.should.be.equal('pohoda');
+            res[1].hostname.should.be.equal('pohodaHost');
+        })
+        .catch(function(err){
+            should.not.exist(err);
         });
     });
     it('should stop all snmp sessions after community found', function(){
