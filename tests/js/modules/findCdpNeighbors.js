@@ -7,9 +7,7 @@ proxyquire('../../../js/modules/findSnmpCommunity',{
         Session: function Session(sessionConfigObj){
             var self = this;//we remember the Session object to later
             //assign options object to it
-            this.getSubtreeAsync = function sessionGetSubtreeAsync(configObj){
-                this.configObj = configObj;
-                this.sessionConfigObj = sessionConfigObj;
+            this.getSubtreeAsync = function sessionGetSubtreeAsync(){
                 return Promise.resolve([ 
                     VarBind {
                         oid: [ 1, 3, 6, 1, 4, 1, 9, 9, 23, 1, 2, 1, 1, 6, 2, 5 ],
@@ -22,6 +20,26 @@ proxyquire('../../../js/modules/findSnmpCommunity',{
                     }
                 ]);
             };
+            this.getAllAsync = function sessionGetAllAsync(){
+                return Promise.resolve([
+                    VarBind {
+                        value: 'some.hostname.com',
+                    },
+                    VarBind {
+                        value: 'GigabitEthernet2/3/8',
+                    },
+                    VarBind {
+                        value: '\n\u0006@>',
+                        valueHex: '0a06403e',
+                    },
+                    VarBind {
+                        value: 'cisco WS-C3750X-12S',
+                    },
+                    VarBind {
+                        value: 'GigabitEthernet2/0/12',
+                    }
+                ]);
+            }
             this.close = sinon.spy();
         }
     }
