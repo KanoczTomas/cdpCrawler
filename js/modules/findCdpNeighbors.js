@@ -20,19 +20,19 @@ function findCdpNeighbors(host, community){
         findCdpNeighbors.session = new snmp.Session({host: host, community: community});
         return findCdpNeighbors.session.getSubtreeAsync({oid: oids.cdpCacheDeviceId})
         .then(function(vars){
-            vasr.forEach(function(entry){
+            vars.forEach(function(entry){
                 findCdpNeighbors.cdpIndexes.push('.' + entry.oid.slice(-2).join('.'));//we take the 2 last elements of an array an convert it to a string delimited with '.'
             });
         });
     };
     function getCdpInformation(){//prepares the workqueue and defines promise when fulfilled
-        findCdpNeighbors.cdpIndexes.forEach(function (cdpIndex, index){
+        findCdpNeighbors.cdpIndexes.forEach(function (cdpIndex){
             var oidsWithIndex = [
-                oids.cdpCacheDeviceId + index, 
-                oids.ifDescription + '.' + index.split(".")[1],
-                oids.cdpCacheAddress + index,
-                oids.cdpCachePlatform + index,
-                oids.cdpCacheDevicePort + index
+                oids.cdpCacheDeviceId + cdpIndex, 
+                oids.ifDescription + '.' + cdpIndex.split(".")[1],
+                oids.cdpCacheAddress + cdpIndex,
+                oids.cdpCachePlatform + cdpIndex,
+                oids.cdpCacheDevicePort + cdpIndex
             ];
             workQueue.push(findCdpNeighbors.session.getAllAsync({oids: oidsWithIndex})
             .then(function (varbinds){
