@@ -11,7 +11,6 @@ var Promise = require('bluebird');
 var snmp = Promise.promisifyAll(require('snmp-native'));
 var config = require('config');
 var oids = config.get('snmp.oids');
-var findSnmpCommunity = require('./findSnmpCommunity');
 
 function findCdpNeighbors(host, community){
     findCdpNeighbors.cdpIndexes = [];//will hold the subtree index for each neighbor - later will be queried per neighbor for IP, hostname, port, etc.
@@ -19,14 +18,10 @@ function findCdpNeighbors(host, community){
     function findCdpIndexes(host, community){
         //we want to remember the session opened here as findCdpNeighbor will reuse it
         findCdpNeighbors.session = new snmp.Session({host: host, community: community});
-        return findCdpNeighbor.session.getSubtreeAsync({oid: oids.cdpCacheDeviceId})
+        return findCdpNeighbors.session.getSubtreeAsync({oid: oids.cdpCacheDeviceId})
         .then(function(vars){
             vasr.forEach(function(entry){
-                var tmp = [];
-                tmp.push(entry.oid.pop());
-                tmp.push(entry.oid.pop());
-                tmp.reverse();
-                findCdpNeighbors.cdpIndexes.push("." + tmp.toString().replace(",","."));//as stringyfiying an array [1 , 3] returns "1,3" we need to change the "," to "."
+                findCdpNeighbors.cdpIndexes.push('.' + entry.oid.slice(-2).join('.'));//we take the 2 last elements of an array an convert it to a string delimited with '.'
             });
         });
     };
