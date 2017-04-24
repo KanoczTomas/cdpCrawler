@@ -13,6 +13,15 @@ var config = require('config');
 var oids = config.get('snmp.oids');
 
 function findCdpNeighbors(host, community){
+    if(arguments.length != 2) {
+        throw new Error('The function takes 2 arguments!');
+    }
+    if(typeof host !== 'string') {
+        throw new Error('host must be a string, invalid type (' + typeof host + ')');
+    }
+    if(typeof community !== 'string') {
+        throw new Error('community must be a string, invalid type (' + typeof community + ')');
+    }
     findCdpNeighbors.cdpIndexes = [];//will hold the subtree index for each neighbor - later will be queried per neighbor for IP, hostname, port, etc.
     var workQueue = [];
     function findCdpIndexes(host, community){
@@ -62,6 +71,7 @@ function findCdpNeighbors(host, community){
         
         try {
             result = yield Promise.all(workQueue);
+            //if(result.length === 0) throw new Error('We got back empty cdp neighbors, is cdp running? Perhaps not a cdp capable device?');
         }
         catch (err){
             result = Promise.reject(err);
