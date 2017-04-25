@@ -32,6 +32,9 @@ function findCdpNeighbors(host, community){
             vars.forEach(function(entry){
                 findCdpNeighbors.cdpIndexes.push('.' + entry.oid.slice(-2).join('.'));//we take the 2 last elements of an array an convert it to a string delimited with '.'
             });
+        })
+        .catch(function(err){
+            throw err;
         });
     };
     function getCdpInformation(){//prepares the workqueue and defines promise when fulfilled
@@ -45,7 +48,7 @@ function findCdpNeighbors(host, community){
             ];
             workQueue.push(findCdpNeighbors.session.getAllAsync({oids: oidsWithIndex})
             .then(function (varbinds){
-                return Promise.resolve({
+                return {
                     neighborHostname: varbinds[0].value,
                     localInterface: varbinds[1].value,
                     neighborIP: function getIP(){
@@ -55,7 +58,7 @@ function findCdpNeighbors(host, community){
                     }(),
                     neighborPlatform: varbinds[3].value,
                     neighborPort: varbinds[4].value
-                });
+                };
             }));
         });
     }
@@ -67,9 +70,9 @@ function findCdpNeighbors(host, community){
         catch (err){
             result = Promise.reject(err);
         }
-        getCdpInformation();//we populate the workQueue
-        
+                
         try {
+            getCdpInformation();//we populate the workQueue
             result = yield Promise.all(workQueue);
             //if(result.length === 0) throw new Error('We got back empty cdp neighbors, is cdp running? Perhaps not a cdp capable device?');
         }
