@@ -4,7 +4,7 @@ var proxyquire = require('proxyquire');
 var should = require('should');
 var sinon = require('sinon');
 
-var hasCDP, snmpErrorGetSubtree;
+var hasCDP, snmpErrorGetSubtree, snmpErrorGetAllAsync;
 
 proxyquire('../../../js/modules/findCdpNeighbors',{
     'snmp-native': {
@@ -27,6 +27,7 @@ proxyquire('../../../js/modules/findCdpNeighbors',{
                 ]);
             };
             this.getAllAsync = function sessionGetAllAsync(oids){
+                if(snmpErrorGetAllAsync) return Promise.reject(new Error('snmpGetAllAsync failed badly - muhaha!'));
                 var oid = '.' + oids.oids[0].split('.').slice(-2).join('.');//we get the last 2 oids parts, but it is a string, must convert to array to do slice
                 var result;
                 switch(oid){
@@ -103,6 +104,7 @@ describe('findCdpNeighbors:', function(){
     beforeEach(function(){
         hasCDP = true;
         snmpErrorGetSubtree = false;
+        snmpErrorGetAllAsync = false;
     })
     
     it('should take 2 arguments', function(){
@@ -168,15 +170,22 @@ describe('findCdpNeighbors:', function(){
             sinon.assert.called(findCdpNeighbors.session.close);
         });
     });
-    it('should be rejected when error occured in findCdpIndexes and propagate error correctly', function(){
+    it('should be rejected when error occured in findCdpIndexes and propagate error correctly + the session should still be closed', function(){
         snmpErrorGetSubtree = true;
         return findCdpNeighbors('arg1', 'arg2')
-        .should.be.rejected()
-        .then(function(err){
-            err.should.be.error();
-        })
+        .should.be.rejectedWith('findCdpIndexes failed badly - muhaha!')
+        .then(function(){
+            sinon.assert.called(findCdpNeighbors.session.close);
+        });
     });
-    it('should be rejected when error occured durin workQueue processing and propagate error correctly');
+    it('should be rejected when error occured during workQueue processing and propagate error correctly + the session should still be closed', function(){
+        snmpErrorGetAllAsync = true;
+        return findCdpNeighbors('arg1', 'arg2')
+        .should.be.rejectedWith('snmpGetAllAsync failed badly - muhaha!')
+        .then(function(){
+            sinon.assert.called(findCdpNeighbors.session.close);
+        });
+    });
 });
 
 

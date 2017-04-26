@@ -32,9 +32,14 @@ function findCdpNeighbors(host, community){
             vars.forEach(function(entry){
                 findCdpNeighbors.cdpIndexes.push('.' + entry.oid.slice(-2).join('.'));//we take the 2 last elements of an array an convert it to a string delimited with '.'
             });
+            return {
+                error: false
+            };
         })
         .catch(function(err){
-            throw err;
+            return {
+                error: err
+            };
         });
     };
     function getCdpInformation(){//prepares the workqueue and defines promise when fulfilled
@@ -66,20 +71,23 @@ function findCdpNeighbors(host, community){
         var result;
         try {
             var findIndexes = yield findCdpIndexes(host, community);
+            if(findIndexes.error !== false) throw findIndexes.error;//the promise returns the error if not fulfilled
+            try {
+                getCdpInformation();//we populate the workQueue
+                result = yield Promise.all(workQueue);
+                //if(result.length === 0) throw new Error('We got back empty cdp neighbors, is cdp running? Perhaps not a cdp capable device?');
+            }
+            catch (err){//catching workQueue errors
+                return Promise.reject(err);
+            }
+            
         }
-        catch (err){
-            result = Promise.reject(err);
+        catch (err){//we catch findCdpIndexes errors here
+            return Promise.reject(err);
         }
-                
-        try {
-            getCdpInformation();//we populate the workQueue
-            result = yield Promise.all(workQueue);
-            //if(result.length === 0) throw new Error('We got back empty cdp neighbors, is cdp running? Perhaps not a cdp capable device?');
+        finally {//we have to close the sessions
+            findCdpNeighbors.session.close(); //we close the snmp session
         }
-        catch (err){
-            result = Promise.reject(err);
-        }
-        findCdpNeighbors.session.close(); //we close the snmp session
         return result;
     })();
     return resultPromise;
