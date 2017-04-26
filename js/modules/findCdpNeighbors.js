@@ -1,9 +1,17 @@
 'use strict';
 
-//@params hostname
+//@params hostname, community
 //@returns promise
-// - @promise resolved -> Array of CDP neighbors
-// - @promise rejected -> Error("community not found);
+// - @promise resolved -> Array of CDP neighbors objects
+//e.g.
+//[{ 
+//  neighborHostname: 'some34.hostname.com',
+//  localInterface: 'GigabitEthernet2/3/34',
+//  neighborIP: '34.34.34.34',
+//  neighborPlatform: 'cisco WS-C3750X-12S',
+//  neighborPort: 'GigabitEthernet2/0/12' 
+// }]
+// - @promise rejected -> Proper error propagated
 //----------------------------------------------------
 //
 
@@ -32,12 +40,12 @@ function findCdpNeighbors(host, community){
             vars.forEach(function(entry){
                 findCdpNeighbors.cdpIndexes.push('.' + entry.oid.slice(-2).join('.'));//we take the 2 last elements of an array an convert it to a string delimited with '.'
             });
-            return {
+            return {//when we succeed we return error: false
                 error: false
             };
         })
         .catch(function(err){
-            return {
+            return {//we return the error for further processing
                 error: err
             };
         });
