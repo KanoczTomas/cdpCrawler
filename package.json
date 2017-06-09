@@ -30,6 +30,8 @@
     "config": "^1.25.1",
     "graph-data-structure": "^0.8.0",
     "js-yaml": "^3.8.2",
+    "nslookup": "^1.1.1",
+    "promiseq": "^0.1.0",
     "snmp-native": "^1.1.0"
   },
   "devDependencies": {

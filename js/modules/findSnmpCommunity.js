@@ -14,7 +14,7 @@ var communities = config.get('snmp.communities');
 var oids = config.get('snmp.oids');
 
 
-function findSnmpCommunity(hostname){
+function findSnmpCommunity(hostname){//hostname can be an IP as well, just has to be a string
     if(typeof hostname !== 'string') throw new Error('Bad input argument, should be of type string');
     
     findSnmpCommunity.sessions = [];
